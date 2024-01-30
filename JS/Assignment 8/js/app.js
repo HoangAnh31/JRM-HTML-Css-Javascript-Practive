@@ -24,6 +24,9 @@
  */
 const navbarList = document.getElementById("navbar__list");
 const viewportHeight = window.innerHeight;
+const sectionList = document.querySelectorAll("section");
+let indexSec = sectionList.length - 1;
+let lastScrollTop = window.scrollY || document.documentElement.scrollTop;
 
 /**
  * End Global Variables
@@ -34,8 +37,12 @@ const viewportHeight = window.innerHeight;
 const createNode = (textSection, hasActive) => {
   const nodeLi = document.createElement("li");
   nodeLi.className = hasActive ? "nav nav--active" : "nav";
-  const nodeHref = document.createElement("a");
-  nodeHref.href = `#${textSection.toLowerCase().replace(/\s/g, "")}`;
+  const nodeHref = document.createElement("span");
+  nodeHref.classList.add("menu__link");
+  nodeHref.setAttribute(
+    "sectionId",
+    `${textSection.toLowerCase().replace(/\s/g, "")}`
+  );
   const textNode = document.createTextNode(textSection);
   nodeHref.appendChild(textNode);
   nodeLi.appendChild(nodeHref);
@@ -56,7 +63,7 @@ const removeClassSiblings = () => {
  *
  */
 
-document.querySelectorAll("section").forEach((sec, index) => {
+sectionList.forEach((sec, index) => {
   // build the nav
   let hasActive = false;
   if (index === 0) hasActive = true;
@@ -70,39 +77,51 @@ document.querySelectorAll("section").forEach((sec, index) => {
       : "section--style";
 });
 
-// Scroll to anchor ID using scrollTO event
-document.addEventListener("click", (event) => {
-  const tagA = event.target;
-  if (tagA.nodeName.toLowerCase() === "a") {
+// Scroll to anchor ID using scrollBy event
+document.getElementById("navbar__list").addEventListener("click", (event) => {
+  const elClicked = event.target;
+  if (elClicked.className === "menu__link") {
     removeClassSiblings();
-    const idSection = tagA.getAttribute("href");
-    const section = document.querySelector(idSection);
+    const idSection = elClicked.getAttribute("sectionId");
+    const section = document.getElementById(idSection);
 
-    tagA.parentElement.classList.add("nav--active");
+    elClicked.parentElement.classList.add("nav--active");
     section.classList.add("your-active-class");
 
-    const topSection = section.getBoundingClientRect().top;
-    console.log(topSection);
+    const coordSection = section.getBoundingClientRect();
 
-    tagA.addEventListener("click", (e) => {
-      console.log(topSection);
-    });
-
-    window.scrollTo({
-      top: topSection,
+    window.scrollBy({
+      top: coordSection.y,
+      left: coordSection.x,
       behavior: "smooth",
     });
   }
 });
+
+window.onscroll = function (event) {
+  const scrollTopPosition =
+    window.scrollY || document.documentElement.scrollTop;
+
+  if (scrollTopPosition < lastScrollTop) {
+    const currSecY = sectionList[indexSec].getBoundingClientRect().y;
+    if (currSecY > 0) {
+      removeClassSiblings();
+      const id = sectionList[indexSec].getAttribute("id");
+      document
+        .querySelector(`[sectionid=${id}]`)
+        .parentElement.classList.add("nav--active");
+      sectionList[indexSec].classList.add("your-active-class");
+      indexSec = indexSec > 0 ? --indexSec : 0;
+    }
+  } else {
+    indexSec = sectionList.length - 1;
+  }
+
+  lastScrollTop = scrollTopPosition <= 0 ? 0 : scrollTopPosition;
+};
 
 /**
  * End Main Functions
  * Begin Events
  *
  */
-
-// Build menu
-
-// Scroll to section on link click
-
-// Set sections as active
